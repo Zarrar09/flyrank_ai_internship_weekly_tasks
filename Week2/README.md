@@ -1,6 +1,6 @@
 # Task API
 
-A CRUD REST API for managing a to-do list, built with FastAPI. Data is stored in memory — no database yet, that's Week 3.
+A CRUD REST API for managing a to-do list, built with FastAPI. Data is stored in memory, and no database yet, that's Week 3.
 
 ## Getting Started
 

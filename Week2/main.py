@@ -98,6 +98,6 @@ async def deleteTask(id : int):
     for i in range(len(tasks)):
         if tasks[i]["id"] == id:
             tasks.pop(i)
-            return JSONResponse(status_code=204)
+            return JSONResponse(status_code=204, content=tasks[i])
         
     return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})

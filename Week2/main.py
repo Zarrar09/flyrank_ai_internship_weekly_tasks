@@ -1,11 +1,19 @@
-from fastapi import FastAPI
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
 
 app = FastAPI()
 
-#To add tasks: curl.exe -i -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d "{\"title\": \"Buy milk\"}"
+# To add tasks: curl.exe -i -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d "{\"title\": \"Buy milk\"}"
+
+class TaskCreate(BaseModel):
+    title: str
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    done: Optional[bool] = None
 
 tasks = [
     {
@@ -46,9 +54,8 @@ def getTask(id : int):
         return JSONResponse(status_code=404, content={"error": f"Task {id} not found"})
     
 @app.post("/tasks")
-async def addTask(request: Request):
-    body = await request.json()
-    title = body.get("title")
+async def addTask(task: TaskCreate):
+    title = task.title
     
     if not title:
         return JSONResponse(status_code=400, content={"error": "You did not provide a title"})
@@ -57,7 +64,7 @@ async def addTask(request: Request):
     for i in range(len(tasks)):
         if int(tasks[i]["id"]) > maxID:
             maxID = int(tasks[i]["id"])
-    maxID = int(tasks[lastIndex]["id"]) + 1
+    maxID += 1
     tasks.append(
         {
             "id": maxID,
@@ -65,4 +72,32 @@ async def addTask(request: Request):
             "done": False,
         }
     )
-    return JSONResponse(status_code=201, content="Created, the polite way to say done.")
+    return JSONResponse(status_code=201, content=tasks[len(tasks) - 1])
+
+@app.put("/tasks/{id}")
+async def replaceTask(id : int, task: TaskUpdate):
+    
+    title = task.title
+    done = task.done
+    
+    if title is None and done is None:
+        return JSONResponse(status_code=400, content={"error": "You did not provide a title or done"})
+    
+    for i in range(len(tasks)):
+        if id == tasks[i]["id"]:
+            if title is not None:
+                tasks[i]["title"] = title
+            if done is not None:
+                tasks[i]["done"] = done
+            return JSONResponse(status_code=200, content=tasks[i])
+            
+    return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})
+
+@app.delete("/tasks/{id}")
+async def deleteTask(id : int):
+    for i in range(len(tasks)):
+        if tasks[i]["id"] == id:
+            tasks.pop(i)
+            return JSONResponse(status_code=204)
+        
+    return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})

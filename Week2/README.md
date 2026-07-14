@@ -43,7 +43,7 @@ content-type: application/json
 
 ## Swagger UI
 
-![List all tasks](images/list-tasks.png)
+![List all tasks](Week2/images/list-tasks.png)
 ![View one task](images/view-task.png)
 ![Create task](images/create-task.png)
 ![Update task](images/update-task.png)

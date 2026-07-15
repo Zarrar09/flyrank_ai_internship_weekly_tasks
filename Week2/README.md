@@ -1,6 +1,6 @@
 # Task API
 
-A CRUD REST API for managing a to-do list, built with FastAPI. Data is stored in memory — no database yet, that's Week 3.
+A CRUD REST API for managing a to-do list, built with FastAPI. Data is stored in memory, and no database yet, that's Week 3.
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ content-type: application/json
 
 ## Swagger UI
 
-![List all tasks](Week2/images/list-tasks.jpg)
+![List all tasks](images/list-tasks.png)
 ![View one task](images/view-task.png)
 ![Create task](images/create-task.png)
 ![Update task](images/update-task.png)

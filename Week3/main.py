@@ -3,8 +3,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from database import lifespan
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
 
 # To add tasks: curl.exe -i -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d "{\"title\": \"Buy milk\"}"
 

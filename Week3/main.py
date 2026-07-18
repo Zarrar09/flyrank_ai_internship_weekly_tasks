@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from database import lifespan
+import repository
 
 
 app = FastAPI(lifespan=lifespan)
@@ -44,62 +45,53 @@ def getHealth():
     return {"status": "ok"}
 
 @app.get('/tasks')
-def allTasks():
-    return tasks
+async def allTasks(request: Request):
+    pool = request.app.state.db_pool
+    return await repository.get_all_tasks(pool)
     
 @app.get("/tasks/{id}")
-def getTask(id : int):
-    for i in range(len(tasks)):
-        if id == tasks[i]['id']:
-            return JSONResponse(status_code=200, content=tasks[i])
-    else:
+async def getTask(id : int, request: Request):
+    pool = request.app.state.db_pool
+    result = await repository.get_task(id=id, pool=pool)
+    if result == None:
         return JSONResponse(status_code=404, content={"error": f"Task {id} not found"})
+    else:
+        return JSONResponse(status_code=200, content=result)
     
 @app.post("/tasks")
-async def addTask(task: TaskCreate):
+async def addTask(task: TaskCreate, request: Request):
     title = task.title
     
     if not title:
         return JSONResponse(status_code=400, content={"error": "You did not provide a title"})
     
-    maxID = 0
-    for i in range(len(tasks)):
-        if int(tasks[i]["id"]) > maxID:
-            maxID = int(tasks[i]["id"])
-    maxID += 1
-    tasks.append(
-        {
-            "id": maxID,
-            "title": title,
-            "done": False,
-        }
-    )
-    return JSONResponse(status_code=201, content=tasks[len(tasks) - 1])
+    pool = request.app.state.db_pool
+    result = await repository.insert_task(title=title, pool=pool)
+    
+    return JSONResponse(status_code=201, content=result)
 
 @app.put("/tasks/{id}")
-async def replaceTask(id : int, task: TaskUpdate):
-    
+async def replaceTask(id: int, task: TaskUpdate, request: Request):
     title = task.title
     done = task.done
     
     if title is None and done is None:
         return JSONResponse(status_code=400, content={"error": "You did not provide a title or done"})
     
-    for i in range(len(tasks)):
-        if id == tasks[i]["id"]:
-            if title is not None:
-                tasks[i]["title"] = title
-            if done is not None:
-                tasks[i]["done"] = done
-            return JSONResponse(status_code=200, content=tasks[i])
-            
-    return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})
+    pool = request.app.state.db_pool
+    result = await repository.replace_task(id, title, done, pool)
+    
+    if result is None:
+        return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})
+    
+    return JSONResponse(status_code=200, content=result)
 
 @app.delete("/tasks/{id}")
-async def deleteTask(id : int):
-    for i in range(len(tasks)):
-        if tasks[i]["id"] == id:
-            tasks.pop(i)
-            return JSONResponse(status_code=204, content=tasks[i])
-        
-    return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})
+async def deleteTask(id: int, request: Request):
+    pool = request.app.state.db_pool
+    result = await repository.delete_task(id, pool)
+    
+    if result is None:
+        return JSONResponse(status_code=404, content={"error": f"{id} does not exist"})
+    
+    return JSONResponse(status_code=204)

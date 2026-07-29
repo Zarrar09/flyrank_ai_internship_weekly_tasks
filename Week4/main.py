@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi import Header
 from supabase_client import supabase
 from pydantic import BaseModel 
+
 
 app = FastAPI()
 
@@ -20,6 +22,15 @@ async def startup():
 @app.get("/")
 async def root():
     return {"status": "ok"}
+
+@app.get("/public/info")
+async def message():
+    return JSONResponse(status_code=200, content={"message": "Welcome Stranger! This information is public."})
+
+@app.get("/protected/profile")
+async def accessProfile(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Access token required"})
 
 @app.post("/auth/signup")
 async def signup(signup: SignUpRequest):

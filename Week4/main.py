@@ -31,6 +31,26 @@ async def message():
 async def accessProfile(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         return JSONResponse(status_code=401, content={"error": "Access token required"})
+    
+    token = authorization.replace("Bearer ", "")
+    
+    try:
+        response = supabase.auth.get_user(token)
+        user = response.user
+        
+        print(response)
+        
+        return JSONResponse(
+            status_code=200, 
+            content={
+                "id": user.id,
+                "email": user.email,
+                "created_at": str(user.created_at)
+            }
+        )
+    except Exception as e:
+        print("ACTUAL ERROR:", e)
+        return JSONResponse(status_code=401, content={"error": "Invalid or expired token"})
 
 @app.post("/auth/signup")
 async def signup(signup: SignUpRequest):

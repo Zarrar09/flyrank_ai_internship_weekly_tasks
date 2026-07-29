@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import Header
 from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase_client import supabase
 from pydantic import BaseModel 
 
 
 app = FastAPI()
+security = HTTPBearer()
 
 class SignUpRequest(BaseModel):
     email: str
@@ -29,11 +31,14 @@ async def message():
     return JSONResponse(status_code=200, content={"message": "Welcome Stranger! This information is public."})
 
 # Dependency Function that we recall again and again to verify if correct token or invalid token
-async def get_current_user(authorization: str = Header(None)):
-        if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Access token required")
+async def get_current_user(obaintedCredentials: HTTPAuthorizationCredentials = Depends(security)):
+        # if not authorization or not authorization.startswith("Bearer "):
+        #     raise HTTPException(status_code=401, detail="Access token required")
         
-        token = authorization.replace("Bearer ", "")
+        # token = authorization.replace("Bearer ", "")
+        # This is automatically done by the HTTPBearer dependency that we called at the start
+        
+        token = obaintedCredentials.credentials
         
         try: 
             response = supabase.auth.get_user(token)

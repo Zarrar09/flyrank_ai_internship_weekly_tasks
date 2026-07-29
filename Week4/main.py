@@ -37,27 +37,27 @@ async def get_current_user(authorization: str = Header(None)):
         
         try: 
             response = supabase.auth.get_user(token)
-            return response.user
+            return {"user": response.user, "token": token}
         except Exception:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 @app.get("/protected/profile")
-async def accessProfile(user = Depends(get_current_user)):    
+async def accessProfile(auth = Depends(get_current_user)):    
     return JSONResponse(
         status_code=200, 
         content={
-            "id": user.id,
-            "email": user.email,
-            "created_at": str(user.created_at)
+            "id": auth["user"].id,
+            "email": auth["user"].email,
+            "created_at": str(auth["user"].created_at)
         }
     )
     
 @app.get("/protected/dashboard")
-async def dashboard(result = Depends(get_current_user)):
+async def dashboard(auth = Depends(get_current_user)):
     return JSONResponse(
         status_code=200,
         content={
-            "message" : f"Welcome to your dashboard {result.email}"
+            "message" : f"Welcome to your dashboard {auth["user"].email}"
         }
     )
     
@@ -107,3 +107,14 @@ async def login(loginDetails : LoginRequest):
         )
     except:
         return JSONResponse(status_code=401, content={"error": "Invalid Credentials"})
+    
+@app.post("/auth/logout")
+async def logout(auth = Depends(get_current_user)):
+    token = auth["token"]
+    
+    try:
+        supabase.auth.sign_out(token)
+        return JSONResponse(status_code=204, content=None)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": "Invalid or expired token"})
+    
